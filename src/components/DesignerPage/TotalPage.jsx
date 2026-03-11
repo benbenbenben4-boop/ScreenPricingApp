@@ -1,17 +1,12 @@
 import { calculateScreen } from '../../store/projectStore';
 import './TotalPage.css';
 
-function fmt(n) {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
-}
-
 export default function TotalPage({ screens, panelTypes }) {
   const screenCalcs = screens.map((screen) => ({
     screen,
     calc: calculateScreen(screen, panelTypes),
   }));
 
-  const grandTotal = screenCalcs.reduce((sum, { calc }) => sum + calc.totalCost, 0);
   const totalPanels = screenCalcs.reduce((sum, { calc }) => sum + calc.totalPanels, 0);
   const totalWeight = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWeight, 0);
 
@@ -34,13 +29,9 @@ export default function TotalPage({ screens, panelTypes }) {
           <span className="summary-label">Total Panels</span>
           <span className="summary-value">{totalPanels}</span>
         </div>
-        <div className="summary-item">
+        <div className="summary-item highlight">
           <span className="summary-label">Total Weight</span>
           <span className="summary-value">{totalWeight.toFixed(1)} kg</span>
-        </div>
-        <div className="summary-item highlight">
-          <span className="summary-label">Grand Total</span>
-          <span className="summary-value">{fmt(grandTotal)}</span>
         </div>
       </div>
 
@@ -49,7 +40,11 @@ export default function TotalPage({ screens, panelTypes }) {
           <div key={screen.id} className="breakdown-card">
             <div className="breakdown-header">
               <h3>{screen.name}</h3>
-              <span className="breakdown-total">{fmt(calc.totalCost)}</span>
+              <span className="breakdown-meta">
+                {calc.screenWidthMm > 0
+                  ? `${(calc.screenWidthMm / 1000).toFixed(2)}m × ${(calc.screenHeightMm / 1000).toFixed(2)}m`
+                  : `${screen.widthPanels}×${screen.heightPanels} panels`}
+              </span>
             </div>
             <div className="breakdown-body">
               <div className="breakdown-row">
@@ -58,8 +53,8 @@ export default function TotalPage({ screens, panelTypes }) {
               </div>
               {calc.panelType && (
                 <div className="breakdown-row">
-                  <span>Resolution</span>
-                  <span>{calc.panelType.pixelsWide}×{calc.panelType.pixelsTall}px per panel</span>
+                  <span>Resolution per Panel</span>
+                  <span>{calc.panelType.pixelsWide}×{calc.panelType.pixelsTall}px</span>
                 </div>
               )}
               <div className="breakdown-row">
@@ -69,9 +64,7 @@ export default function TotalPage({ screens, panelTypes }) {
               {calc.screenWidthMm > 0 && (
                 <div className="breakdown-row">
                   <span>Screen Size</span>
-                  <span>
-                    {(calc.screenWidthMm / 1000).toFixed(2)}m × {(calc.screenHeightMm / 1000).toFixed(2)}m
-                  </span>
+                  <span>{(calc.screenWidthMm / 1000).toFixed(2)}m × {(calc.screenHeightMm / 1000).toFixed(2)}m</span>
                 </div>
               )}
               <div className="breakdown-row">
@@ -81,10 +74,6 @@ export default function TotalPage({ screens, panelTypes }) {
               <div className="breakdown-row">
                 <span>Total Weight</span>
                 <span>{calc.totalWeight.toFixed(1)} kg</span>
-              </div>
-              <div className="breakdown-row">
-                <span>Panel Cost</span>
-                <span>{fmt(calc.panelsCost)}</span>
               </div>
               <div className="breakdown-row">
                 <span>Mount</span>
@@ -129,10 +118,6 @@ export default function TotalPage({ screens, panelTypes }) {
                   )}
                 </>
               )}
-              <div className="breakdown-row total-row">
-                <span>Screen Total</span>
-                <span>{fmt(calc.totalCost)}</span>
-              </div>
             </div>
           </div>
         ))}

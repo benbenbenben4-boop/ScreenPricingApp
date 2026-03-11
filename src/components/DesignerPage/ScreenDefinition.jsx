@@ -4,7 +4,7 @@ import './ScreenDefinition.css';
 
 function PanelTypeModal({ existing, onClose, onSave }) {
   const [form, setForm] = useState(
-    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, price: 0 }
+    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0 }
   );
 
   function handleSubmit(e) {
@@ -41,16 +41,10 @@ function PanelTypeModal({ existing, onClose, onSave }) {
               <input type="number" min="1" value={form.height} onChange={(e) => setForm({ ...form, height: parseInt(e.target.value) || 0 })} required />
             </label>
           </div>
-          <div className="form-row">
-            <label>
-              Weight per Panel (kg)
-              <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
-            </label>
-            <label>
-              Price per Panel (£)
-              <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} required />
-            </label>
-          </div>
+          <label>
+            Weight per Panel (kg)
+            <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
+          </label>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn-primary">Save</button>
@@ -125,7 +119,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               {!screen.panelTypeId && <option value="" disabled>Select a panel type…</option>}
               {panelTypes.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg · £{p.price}/panel
+                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg
                 </option>
               ))}
             </select>

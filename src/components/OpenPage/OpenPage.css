@@ -25,6 +25,20 @@
   font-size: 0.95rem;
 }
 
+.version-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+  position: relative;
+  top: -3px;
+}
+
 .open-actions {
   display: flex;
   justify-content: center;

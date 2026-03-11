@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProject, cloneProject, loadProjects, saveProjects } from '../../store/projectStore';
+import { VERSION } from '../../version';
 import './OpenPage.css';
 
 function NewProjectModal({ onClose, onCreate }) {
@@ -144,7 +145,7 @@ export default function OpenPage() {
   return (
     <div className="open-page">
       <header className="open-header">
-        <h1>Screen Pricing</h1>
+        <h1>Screen Pricing <span className="version-badge">{VERSION}</span></h1>
         <p className="subtitle">LED Screen Configuration &amp; Quoting Tool</p>
       </header>
 

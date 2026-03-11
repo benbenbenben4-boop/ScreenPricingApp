@@ -80,10 +80,10 @@
   font-size: 1rem;
 }
 
-.breakdown-total {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--accent);
+.breakdown-meta {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .breakdown-body {
@@ -108,18 +108,6 @@
 .breakdown-row span:last-child {
   font-weight: 500;
   color: var(--text-primary);
-}
-
-.total-row {
-  border-top: 1px solid var(--border);
-  margin-top: 0.25rem;
-  padding-top: 0.6rem;
-  font-weight: 700;
-}
-
-.total-row span:last-child {
-  color: var(--accent);
-  font-weight: 700;
 }
 
 .breakdown-row-warn span:last-child {

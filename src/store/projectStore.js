@@ -36,7 +36,7 @@ export function cloneProject(project, newName) {
 }
 
 // Panel types are fully user-defined per project (stored in project.customPanelTypes).
-// Panel shape: { id, name, pixelsWide, pixelsTall, width (mm), height (mm), weight (kg), price (£) }
+// Panel shape: { id, name, pixelsWide, pixelsTall, width (mm), height (mm), weight (kg) }
 
 export const MOUNT_TYPES = ['Flown', 'Ground Stacked', 'Roof'];
 export const CURVE_TYPES = ['Flat', 'Curved'];
@@ -69,16 +69,13 @@ export function calculateScreen(screen, panelTypes) {
     return {
       panelType: null,
       totalPanels,
-      panelsCost: 0,
       totalWeight: 0,
       udl: 0,
       screenWidthMm: 0,
       screenHeightMm: 0,
-      totalCost: 0,
     };
   }
 
-  const panelsCost = totalPanels * (panelType.price || 0);
   const totalWeight = totalPanels * (panelType.weight || 0);
   const riggingPoints = screen.riggingPoints || 0;
   const udl = riggingPoints > 0 ? totalWeight / riggingPoints : 0;
@@ -88,11 +85,9 @@ export function calculateScreen(screen, panelTypes) {
   return {
     panelType,
     totalPanels,
-    panelsCost,
     totalWeight,
     udl,
     screenWidthMm,
     screenHeightMm,
-    totalCost: panelsCost,
   };
 }
