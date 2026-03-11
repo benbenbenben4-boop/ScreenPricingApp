@@ -247,24 +247,62 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
           <div className="sub-section">
             <div className="form-row">
               <label>
-                Header Size (panels)
-                <input
-                  type="number"
-                  min="0"
+                Header
+                <select
                   value={screen.headerSize}
-                  onChange={(e) => update('headerSize', parseInt(e.target.value) || 0)}
-                />
+                  onChange={(e) => update('headerSize', parseInt(e.target.value))}
+                  disabled={!currentPanel}
+                >
+                  <option value={0}>None</option>
+                  {currentPanel && (
+                    <>
+                      <option value={1}>1 panel ({(currentPanel.width / 1000).toFixed(2)}m)</option>
+                      <option value={2}>2 panels ({(currentPanel.width * 2 / 1000).toFixed(2)}m)</option>
+                    </>
+                  )}
+                </select>
               </label>
               <label>
-                Footer Size (panels)
-                <input
-                  type="number"
-                  min="0"
+                Footer
+                <select
                   value={screen.footerSize}
-                  onChange={(e) => update('footerSize', parseInt(e.target.value) || 0)}
-                />
+                  onChange={(e) => update('footerSize', parseInt(e.target.value))}
+                  disabled={!currentPanel}
+                >
+                  <option value={0}>None</option>
+                  {currentPanel && (
+                    <>
+                      <option value={1}>1 panel ({(currentPanel.width / 1000).toFixed(2)}m)</option>
+                      <option value={2}>2 panels ({(currentPanel.width * 2 / 1000).toFixed(2)}m)</option>
+                    </>
+                  )}
+                </select>
               </label>
             </div>
+
+            {currentPanel && screen.footerSize > 0 && (() => {
+              const footerCount = Math.round(screen.widthPanels / screen.footerSize);
+              const rearFooterCount = screen.footerSize === 1 ? footerCount : footerCount + 1;
+              const screenHeightM = (screen.heightPanels * currentPanel.height) / 1000;
+              const uprightsPerCol = screenHeightM > 0.5 ? Math.floor(screenHeightM) : 0;
+              const totalUprights = rearFooterCount * uprightsPerCol;
+              return (
+                <div className="rigging-summary">
+                  <div className="rigging-summary-row">
+                    <span>Base footers</span><strong>{footerCount}</strong>
+                  </div>
+                  <div className="rigging-summary-row">
+                    <span>Rear footers</span><strong>{rearFooterCount}</strong>
+                  </div>
+                  <div className="rigging-summary-row">
+                    <span>Uprights</span><strong>{totalUprights}</strong>
+                  </div>
+                  <div className="rigging-summary-row">
+                    <span>Grab arms</span><strong>{totalUprights}</strong>
+                  </div>
+                </div>
+              );
+            })()}
 
             <h4>Curve</h4>
             <div className="radio-group">

@@ -82,6 +82,23 @@ export function calculateScreen(screen, panelTypes) {
   const screenWidthMm = screen.widthPanels * panelType.width;
   const screenHeightMm = screen.heightPanels * panelType.height;
 
+  // Ground stack rigging counts
+  // footerSize = 1 or 2 (panels wide per footer unit); 0 = none
+  const footerSize = screen.footerSize || 0;
+  let footerCount = 0;
+  let rearFooterCount = 0;
+  let totalUprights = 0;
+  let totalGrabs = 0;
+
+  if (screen.mountType === 'Ground Stacked' && footerSize > 0) {
+    footerCount = Math.round(screen.widthPanels / footerSize);
+    rearFooterCount = footerSize === 1 ? footerCount : footerCount + 1;
+    const screenHeightM = screenHeightMm / 1000;
+    const uprightsPerCol = screenHeightM > 0.5 ? Math.floor(screenHeightM) : 0;
+    totalUprights = rearFooterCount * uprightsPerCol;
+    totalGrabs = totalUprights;
+  }
+
   return {
     panelType,
     totalPanels,
@@ -89,5 +106,9 @@ export function calculateScreen(screen, panelTypes) {
     udl,
     screenWidthMm,
     screenHeightMm,
+    footerCount,
+    rearFooterCount,
+    totalUprights,
+    totalGrabs,
   };
 }

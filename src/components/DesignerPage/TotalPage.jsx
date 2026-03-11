@@ -101,14 +101,34 @@ export default function TotalPage({ screens, panelTypes }) {
                   {screen.headerSize > 0 && (
                     <div className="breakdown-row">
                       <span>Header</span>
-                      <span>{screen.headerSize} panel rows</span>
+                      <span>{screen.headerSize} panel{screen.headerSize > 1 ? 's' : ''} wide</span>
                     </div>
                   )}
                   {screen.footerSize > 0 && (
                     <div className="breakdown-row">
                       <span>Footer</span>
-                      <span>{screen.footerSize} panel rows</span>
+                      <span>{screen.footerSize} panel{screen.footerSize > 1 ? 's' : ''} wide</span>
                     </div>
+                  )}
+                  {calc.footerCount > 0 && (
+                    <>
+                      <div className="breakdown-row">
+                        <span>Base footers</span>
+                        <span>{calc.footerCount}</span>
+                      </div>
+                      <div className="breakdown-row">
+                        <span>Rear footers</span>
+                        <span>{calc.rearFooterCount}</span>
+                      </div>
+                      <div className="breakdown-row">
+                        <span>Uprights</span>
+                        <span>{calc.totalUprights}</span>
+                      </div>
+                      <div className="breakdown-row">
+                        <span>Grab arms</span>
+                        <span>{calc.totalGrabs}</span>
+                      </div>
+                    </>
                   )}
                   {screen.curveType === 'Curved' && (
                     <div className="breakdown-row">

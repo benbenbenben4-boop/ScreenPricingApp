@@ -144,3 +144,26 @@
   color: var(--danger);
   font-weight: 600;
 }
+
+.rigging-summary {
+  margin-top: 0.875rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1.5rem;
+}
+
+.rigging-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.rigging-summary-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
