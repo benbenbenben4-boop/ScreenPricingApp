@@ -1,4 +1,4 @@
-import { PANEL_TYPES, calculateScreen } from '../../store/projectStore';
+import { calculateScreen } from '../../store/projectStore';
 import './TotalPage.css';
 
 function fmt(n) {
@@ -6,16 +6,14 @@ function fmt(n) {
 }
 
 export default function TotalPage({ screens, panelTypes }) {
-  const allPanelTypes = [...PANEL_TYPES, ...panelTypes];
-
   const screenCalcs = screens.map((screen) => ({
     screen,
-    calc: calculateScreen(screen, allPanelTypes),
+    calc: calculateScreen(screen, panelTypes),
   }));
 
   const grandTotal = screenCalcs.reduce((sum, { calc }) => sum + calc.totalCost, 0);
   const totalPanels = screenCalcs.reduce((sum, { calc }) => sum + calc.totalPanels, 0);
-  const totalRigging = screenCalcs.reduce((sum, { calc }) => sum + calc.riggingCost, 0);
+  const totalWeight = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWeight, 0);
 
   if (screens.length === 0) {
     return (
@@ -37,8 +35,8 @@ export default function TotalPage({ screens, panelTypes }) {
           <span className="summary-value">{totalPanels}</span>
         </div>
         <div className="summary-item">
-          <span className="summary-label">Rigging</span>
-          <span className="summary-value">{fmt(totalRigging)}</span>
+          <span className="summary-label">Total Weight</span>
+          <span className="summary-value">{totalWeight.toFixed(1)} kg</span>
         </div>
         <div className="summary-item highlight">
           <span className="summary-label">Grand Total</span>
@@ -56,21 +54,33 @@ export default function TotalPage({ screens, panelTypes }) {
             <div className="breakdown-body">
               <div className="breakdown-row">
                 <span>Panel Type</span>
-                <span>{calc.panelType.name}</span>
+                <span>{calc.panelType ? calc.panelType.name : <em>None selected</em>}</span>
               </div>
+              {calc.panelType && (
+                <div className="breakdown-row">
+                  <span>Resolution</span>
+                  <span>{calc.panelType.pixelsWide}×{calc.panelType.pixelsTall}px per panel</span>
+                </div>
+              )}
               <div className="breakdown-row">
                 <span>Configuration</span>
                 <span>{screen.widthPanels} × {screen.heightPanels} panels</span>
               </div>
-              <div className="breakdown-row">
-                <span>Screen Size</span>
-                <span>
-                  {(calc.screenWidthMm / 1000).toFixed(2)}m × {(calc.screenHeightMm / 1000).toFixed(2)}m
-                </span>
-              </div>
+              {calc.screenWidthMm > 0 && (
+                <div className="breakdown-row">
+                  <span>Screen Size</span>
+                  <span>
+                    {(calc.screenWidthMm / 1000).toFixed(2)}m × {(calc.screenHeightMm / 1000).toFixed(2)}m
+                  </span>
+                </div>
+              )}
               <div className="breakdown-row">
                 <span>Total Panels</span>
                 <span>{calc.totalPanels}</span>
+              </div>
+              <div className="breakdown-row">
+                <span>Total Weight</span>
+                <span>{calc.totalWeight.toFixed(1)} kg</span>
               </div>
               <div className="breakdown-row">
                 <span>Panel Cost</span>
@@ -80,11 +90,22 @@ export default function TotalPage({ screens, panelTypes }) {
                 <span>Mount</span>
                 <span>{screen.mountType}</span>
               </div>
-              {calc.riggingCost > 0 && (
-                <div className="breakdown-row">
-                  <span>Rigging ({screen.riggingPoints} pts)</span>
-                  <span>{fmt(calc.riggingCost)}</span>
-                </div>
+              {(screen.mountType === 'Flown' || screen.mountType === 'Roof') && (
+                <>
+                  <div className="breakdown-row">
+                    <span>Rigging Points</span>
+                    <span>{screen.riggingPoints} × {screen.hoistCapacity} kg capacity</span>
+                  </div>
+                  {screen.riggingPoints > 0 && calc.totalWeight > 0 && (
+                    <div className={`breakdown-row${calc.udl > screen.hoistCapacity ? ' breakdown-row-warn' : ''}`}>
+                      <span>UDL per Hoist</span>
+                      <span>
+                        {calc.udl.toFixed(1)} kg
+                        {calc.udl > screen.hoistCapacity && ' ⚠ exceeds capacity'}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               {screen.mountType === 'Ground Stacked' && (
                 <>
@@ -103,9 +124,7 @@ export default function TotalPage({ screens, panelTypes }) {
                   {screen.curveType === 'Curved' && (
                     <div className="breakdown-row">
                       <span>Curve</span>
-                      <span>
-                        {screen.curveContinuity} — {screen.curveDegree}°
-                      </span>
+                      <span>{screen.curveContinuity} — {screen.curveDegree}°</span>
                     </div>
                   )}
                 </>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { PANEL_TYPES, MOUNT_TYPES, CURVE_TYPES, CURVE_CONTINUITY } from '../../store/projectStore';
+import { MOUNT_TYPES, CURVE_TYPES, CURVE_CONTINUITY } from '../../store/projectStore';
 import './ScreenDefinition.css';
 
 function PanelTypeModal({ existing, onClose, onSave }) {
   const [form, setForm] = useState(
-    existing || { name: '', pitch: '', width: 500, height: 500, price: 0 }
+    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, price: 0 }
   );
 
   function handleSubmit(e) {
@@ -21,24 +21,36 @@ function PanelTypeModal({ existing, onClose, onSave }) {
             Name
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
-          <label>
-            Pixel Pitch (mm)
-            <input type="number" step="0.1" value={form.pitch} onChange={(e) => setForm({ ...form, pitch: parseFloat(e.target.value) })} required />
-          </label>
+          <div className="form-row">
+            <label>
+              Pixels Wide
+              <input type="number" min="1" value={form.pixelsWide} onChange={(e) => setForm({ ...form, pixelsWide: parseInt(e.target.value) || 0 })} required />
+            </label>
+            <label>
+              Pixels Tall
+              <input type="number" min="1" value={form.pixelsTall} onChange={(e) => setForm({ ...form, pixelsTall: parseInt(e.target.value) || 0 })} required />
+            </label>
+          </div>
           <div className="form-row">
             <label>
               Module Width (mm)
-              <input type="number" value={form.width} onChange={(e) => setForm({ ...form, width: parseInt(e.target.value) })} required />
+              <input type="number" min="1" value={form.width} onChange={(e) => setForm({ ...form, width: parseInt(e.target.value) || 0 })} required />
             </label>
             <label>
               Module Height (mm)
-              <input type="number" value={form.height} onChange={(e) => setForm({ ...form, height: parseInt(e.target.value) })} required />
+              <input type="number" min="1" value={form.height} onChange={(e) => setForm({ ...form, height: parseInt(e.target.value) || 0 })} required />
             </label>
           </div>
-          <label>
-            Price per Panel (£)
-            <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })} required />
-          </label>
+          <div className="form-row">
+            <label>
+              Weight per Panel (kg)
+              <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
+            </label>
+            <label>
+              Price per Panel (£)
+              <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} required />
+            </label>
+          </div>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn-primary">Save</button>
@@ -53,8 +65,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [editingPanel, setEditingPanel] = useState(null);
 
-  const allPanelTypes = [...PANEL_TYPES, ...panelTypes];
-  const currentPanel = allPanelTypes.find((p) => p.id === screen.panelTypeId) || allPanelTypes[0];
+  const currentPanel = panelTypes.find((p) => p.id === screen.panelTypeId) || null;
   const isGroundOrStacked = screen.mountType === 'Ground Stacked';
   const isCurved = screen.curveType === 'Curved';
   const isContinuous = screen.curveContinuity === 'Continuous';
@@ -68,17 +79,14 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
     const newTypes = exists
       ? panelTypes.map((p) => (p.id === panelType.id ? panelType : p))
       : [...panelTypes, panelType];
-    // Single atomic update — avoids stale closure overwrite bug
     onSavePanelType(newTypes, panelType.id);
     setShowAddPanel(false);
     setEditingPanel(null);
   }
 
-  // Build column angle array when switching to continuous curve
   function handleContinuityChange(val) {
     let angles = screen.columnAngles;
     if (val === 'Continuous') {
-      // One angle per column gap (columns - 1)
       const gaps = Math.max(0, screen.widthPanels - 1);
       angles = Array.from({ length: gaps }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
     }
@@ -98,45 +106,39 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
     onUpdateScreen({ ...screen, widthPanels: w, columnAngles: angles });
   }
 
-  const screenWidthM = ((screen.widthPanels * currentPanel.width) / 1000).toFixed(2);
-  const screenHeightM = ((screen.heightPanels * currentPanel.height) / 1000).toFixed(2);
+  const screenWidthM = currentPanel ? ((screen.widthPanels * currentPanel.width) / 1000).toFixed(2) : '—';
+  const screenHeightM = currentPanel ? ((screen.heightPanels * currentPanel.height) / 1000).toFixed(2) : '—';
 
   return (
     <div className="screen-definition">
       {/* Panel Selection */}
       <section className="def-section">
-        <h3>Panel Selection</h3>
+        <h3>Panel Type</h3>
         <div className="panel-selector">
-          <select
-            value={screen.panelTypeId}
-            onChange={(e) => update('panelTypeId', e.target.value)}
-          >
-            <optgroup label="Standard Panels">
-              {PANEL_TYPES.map((p) => (
+          {panelTypes.length === 0 ? (
+            <p className="no-panels-msg">No panel types defined yet — add one below.</p>
+          ) : (
+            <select
+              value={screen.panelTypeId || ''}
+              onChange={(e) => update('panelTypeId', e.target.value)}
+            >
+              {!screen.panelTypeId && <option value="" disabled>Select a panel type…</option>}
+              {panelTypes.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — P{p.pitch} ({p.width}×{p.height}mm) £{p.price}/panel
+                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg · £{p.price}/panel
                 </option>
               ))}
-            </optgroup>
-            {panelTypes.length > 0 && (
-              <optgroup label="Custom Panels">
-                {panelTypes.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — P{p.pitch} ({p.width}×{p.height}mm) £{p.price}/panel
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
+            </select>
+          )}
           <div className="panel-type-btns">
             <button className="btn-secondary btn-sm" onClick={() => setShowAddPanel(true)}>
-              + Add Type
+              + Add Panel
             </button>
-            {panelTypes.find((p) => p.id === screen.panelTypeId) && (
+            {currentPanel && (
               <>
                 <button
                   className="btn-secondary btn-sm"
-                  onClick={() => setEditingPanel(panelTypes.find((p) => p.id === screen.panelTypeId))}
+                  onClick={() => setEditingPanel(currentPanel)}
                 >
                   Edit
                 </button>
@@ -181,6 +183,9 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
         <p className="size-display">
           {screen.widthPanels * screen.heightPanels} panels &nbsp;·&nbsp;
           {screenWidthM}m × {screenHeightM}m
+          {currentPanel && (
+            <> &nbsp;·&nbsp; {(screen.widthPanels * screen.heightPanels * currentPanel.weight).toFixed(1)} kg</>
+          )}
         </p>
       </section>
 
@@ -216,16 +221,30 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
                 />
               </label>
               <label>
-                Price per Point (£)
+                Hoist Capacity (kg each)
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
-                  value={screen.riggingPricePerPoint}
-                  onChange={(e) => update('riggingPricePerPoint', parseFloat(e.target.value) || 0)}
+                  step="1"
+                  value={screen.hoistCapacity}
+                  onChange={(e) => update('hoistCapacity', parseFloat(e.target.value) || 0)}
                 />
               </label>
             </div>
+            {currentPanel && screen.riggingPoints > 0 && (() => {
+              const totalWeight = screen.widthPanels * screen.heightPanels * currentPanel.weight;
+              const udl = totalWeight / screen.riggingPoints;
+              const overCapacity = udl > screen.hoistCapacity;
+              return (
+                <div className={`udl-display${overCapacity ? ' udl-warning' : ''}`}>
+                  <span>Total screen weight: <strong>{totalWeight.toFixed(1)} kg</strong></span>
+                  <span>
+                    UDL per hoist: <strong>{udl.toFixed(1)} kg</strong>
+                    {overCapacity && <span className="udl-warn-badge"> ⚠ exceeds capacity</span>}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         )}
 

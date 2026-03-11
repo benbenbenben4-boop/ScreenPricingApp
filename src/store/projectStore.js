@@ -35,15 +35,8 @@ export function cloneProject(project, newName) {
   };
 }
 
-export const PANEL_TYPES = [
-  { id: 'p3', name: 'P3 Indoor', pitch: 3, width: 500, height: 500, price: 450 },
-  { id: 'p3-9', name: 'P3.9 Indoor', pitch: 3.9, width: 500, height: 500, price: 380 },
-  { id: 'p4', name: 'P4 Indoor', pitch: 4, width: 500, height: 500, price: 320 },
-  { id: 'p5', name: 'P5 Outdoor', pitch: 5, width: 500, height: 500, price: 280 },
-  { id: 'p6', name: 'P6 Outdoor', pitch: 6, width: 500, height: 500, price: 240 },
-  { id: 'p8', name: 'P8 Outdoor', pitch: 8, width: 500, height: 500, price: 200 },
-  { id: 'p10', name: 'P10 Outdoor', pitch: 10, width: 500, height: 500, price: 160 },
-];
+// Panel types are fully user-defined per project (stored in project.customPanelTypes).
+// Panel shape: { id, name, pixelsWide, pixelsTall, width (mm), height (mm), weight (kg), price (£) }
 
 export const MOUNT_TYPES = ['Flown', 'Ground Stacked', 'Roof'];
 export const CURVE_TYPES = ['Flat', 'Curved'];
@@ -53,7 +46,7 @@ export function createScreen() {
   return {
     id: uuidv4(),
     name: 'New Screen',
-    panelTypeId: PANEL_TYPES[0].id,
+    panelTypeId: null,
     widthPanels: 6,
     heightPanels: 4,
     mountType: 'Flown',
@@ -64,26 +57,42 @@ export function createScreen() {
     curveContinuity: 'Continuous',
     columnAngles: [],
     riggingPoints: 2,
-    riggingPricePerPoint: 150,
+    hoistCapacity: 1000,
   };
 }
 
 export function calculateScreen(screen, panelTypes) {
-  const panelType = panelTypes.find((p) => p.id === screen.panelTypeId) || panelTypes[0];
+  const panelType = panelTypes.find((p) => p.id === screen.panelTypeId);
   const totalPanels = screen.widthPanels * screen.heightPanels;
-  const panelsCost = totalPanels * panelType.price;
-  const riggingCost = screen.mountType === 'Flown' || screen.mountType === 'Roof'
-    ? screen.riggingPoints * screen.riggingPricePerPoint
-    : 0;
+
+  if (!panelType) {
+    return {
+      panelType: null,
+      totalPanels,
+      panelsCost: 0,
+      totalWeight: 0,
+      udl: 0,
+      screenWidthMm: 0,
+      screenHeightMm: 0,
+      totalCost: 0,
+    };
+  }
+
+  const panelsCost = totalPanels * (panelType.price || 0);
+  const totalWeight = totalPanels * (panelType.weight || 0);
+  const riggingPoints = screen.riggingPoints || 0;
+  const udl = riggingPoints > 0 ? totalWeight / riggingPoints : 0;
   const screenWidthMm = screen.widthPanels * panelType.width;
   const screenHeightMm = screen.heightPanels * panelType.height;
+
   return {
     panelType,
     totalPanels,
     panelsCost,
-    riggingCost,
-    totalCost: panelsCost + riggingCost,
+    totalWeight,
+    udl,
     screenWidthMm,
     screenHeightMm,
+    totalCost: panelsCost,
   };
 }

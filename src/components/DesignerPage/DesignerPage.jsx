@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loadProjects, saveProjects, createScreen, PANEL_TYPES } from '../../store/projectStore';
+import { loadProjects, saveProjects, createScreen } from '../../store/projectStore';
 import ScreenDefinition from './ScreenDefinition';
 import TotalPage from './TotalPage';
 import './DesignerPage.css';
@@ -70,7 +70,7 @@ export default function DesignerPage() {
 
   function deletePanelType(panelTypeId) {
     const newTypes = (project.customPanelTypes || []).filter((p) => p.id !== panelTypeId);
-    const fallbackId = PANEL_TYPES[0].id;
+    const fallbackId = newTypes[0]?.id || null;
     const screens = project.screens.map((s) =>
       s.panelTypeId === panelTypeId ? { ...s, panelTypeId: fallbackId } : s
     );
@@ -127,10 +127,10 @@ export default function DesignerPage() {
                   <p className="sidebar-empty">No screens yet.</p>
                 )}
                 {(project.screens || []).map((screen) => {
-                  const allTypes = [...PANEL_TYPES, ...customPanelTypes];
-                  const pt = allTypes.find((p) => p.id === screen.panelTypeId) || allTypes[0];
-                  const wM = ((screen.widthPanels * pt.width) / 1000).toFixed(2);
-                  const hM = ((screen.heightPanels * pt.height) / 1000).toFixed(2);
+                  const pt = customPanelTypes.find((p) => p.id === screen.panelTypeId);
+                  const sub = pt
+                    ? `${((screen.widthPanels * pt.width) / 1000).toFixed(2)}m × ${((screen.heightPanels * pt.height) / 1000).toFixed(2)}m · ${screen.mountType}`
+                    : `${screen.widthPanels}×${screen.heightPanels} · ${screen.mountType}`;
                   return (
                   <div
                     key={screen.id}
@@ -139,9 +139,7 @@ export default function DesignerPage() {
                   >
                     <div className="screen-item-info">
                       <span className="screen-item-name">{screen.name}</span>
-                      <span className="screen-item-sub">
-                        {wM}m × {hM}m · {screen.mountType}
-                      </span>
+                      <span className="screen-item-sub">{sub}</span>
                     </div>
                     <button
                       className="btn-danger btn-icon"
