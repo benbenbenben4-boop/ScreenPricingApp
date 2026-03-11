@@ -36,7 +36,7 @@ function PanelTypeModal({ existing, onClose, onSave }) {
             </label>
           </div>
           <label>
-            Price per Panel ($)
+            Price per Panel (£)
             <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })} required />
           </label>
           <div className="modal-actions">
@@ -49,7 +49,7 @@ function PanelTypeModal({ existing, onClose, onSave }) {
   );
 }
 
-export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, onUpdatePanelTypes }) {
+export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, onSavePanelType, onDeletePanelType }) {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [editingPanel, setEditingPanel] = useState(null);
 
@@ -65,14 +65,13 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
 
   function handleSavePanelType(panelType) {
     const exists = panelTypes.find((p) => p.id === panelType.id);
-    if (exists) {
-      onUpdatePanelTypes(panelTypes.map((p) => (p.id === panelType.id ? panelType : p)));
-    } else {
-      onUpdatePanelTypes([...panelTypes, panelType]);
-    }
+    const newTypes = exists
+      ? panelTypes.map((p) => (p.id === panelType.id ? panelType : p))
+      : [...panelTypes, panelType];
+    // Single atomic update — avoids stale closure overwrite bug
+    onSavePanelType(newTypes, panelType.id);
     setShowAddPanel(false);
     setEditingPanel(null);
-    update('panelTypeId', panelType.id);
   }
 
   // Build column angle array when switching to continuous curve
@@ -115,7 +114,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
             <optgroup label="Standard Panels">
               {PANEL_TYPES.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — P{p.pitch} ({p.width}×{p.height}mm) ${p.price}/panel
+                  {p.name} — P{p.pitch} ({p.width}×{p.height}mm) £{p.price}/panel
                 </option>
               ))}
             </optgroup>
@@ -123,7 +122,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               <optgroup label="Custom Panels">
                 {panelTypes.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — P{p.pitch} ({p.width}×{p.height}mm) ${p.price}/panel
+                    {p.name} — P{p.pitch} ({p.width}×{p.height}mm) £{p.price}/panel
                   </option>
                 ))}
               </optgroup>
@@ -134,12 +133,20 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               + Add Type
             </button>
             {panelTypes.find((p) => p.id === screen.panelTypeId) && (
-              <button
-                className="btn-secondary btn-sm"
-                onClick={() => setEditingPanel(panelTypes.find((p) => p.id === screen.panelTypeId))}
-              >
-                Edit
-              </button>
+              <>
+                <button
+                  className="btn-secondary btn-sm"
+                  onClick={() => setEditingPanel(panelTypes.find((p) => p.id === screen.panelTypeId))}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn-danger btn-sm"
+                  onClick={() => onDeletePanelType(screen.panelTypeId)}
+                >
+                  Delete
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -209,7 +216,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
                 />
               </label>
               <label>
-                Price per Point ($)
+                Price per Point (£)
                 <input
                   type="number"
                   min="0"

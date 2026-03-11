@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loadProjects, saveProjects, createScreen } from '../../store/projectStore';
+import { loadProjects, saveProjects, createScreen, PANEL_TYPES } from '../../store/projectStore';
 import ScreenDefinition from './ScreenDefinition';
 import TotalPage from './TotalPage';
 import './DesignerPage.css';
@@ -59,8 +59,22 @@ export default function DesignerPage() {
     updateProject({ ...project, screens });
   }
 
-  function updateCustomPanelTypes(types) {
-    updateProject({ ...project, customPanelTypes: types });
+  // Save a panel type (add or edit) and atomically select it on the current screen.
+  // Combines both updates in one updateProject call to avoid stale closure overwrites.
+  function savePanelTypeAndSelect(newTypes, panelTypeId) {
+    const screens = project.screens.map((s) =>
+      s.id === selectedScreenId ? { ...s, panelTypeId } : s
+    );
+    updateProject({ ...project, customPanelTypes: newTypes, screens });
+  }
+
+  function deletePanelType(panelTypeId) {
+    const newTypes = (project.customPanelTypes || []).filter((p) => p.id !== panelTypeId);
+    const fallbackId = PANEL_TYPES[0].id;
+    const screens = project.screens.map((s) =>
+      s.panelTypeId === panelTypeId ? { ...s, panelTypeId: fallbackId } : s
+    );
+    updateProject({ ...project, customPanelTypes: newTypes, screens });
   }
 
   function renameScreen(screenId, name) {
@@ -112,7 +126,12 @@ export default function DesignerPage() {
                 {(project.screens || []).length === 0 && (
                   <p className="sidebar-empty">No screens yet.</p>
                 )}
-                {(project.screens || []).map((screen) => (
+                {(project.screens || []).map((screen) => {
+                  const allTypes = [...PANEL_TYPES, ...customPanelTypes];
+                  const pt = allTypes.find((p) => p.id === screen.panelTypeId) || allTypes[0];
+                  const wM = ((screen.widthPanels * pt.width) / 1000).toFixed(2);
+                  const hM = ((screen.heightPanels * pt.height) / 1000).toFixed(2);
+                  return (
                   <div
                     key={screen.id}
                     className={`screen-item ${selectedScreenId === screen.id ? 'selected' : ''}`}
@@ -121,7 +140,7 @@ export default function DesignerPage() {
                     <div className="screen-item-info">
                       <span className="screen-item-name">{screen.name}</span>
                       <span className="screen-item-sub">
-                        {screen.widthPanels}×{screen.heightPanels} · {screen.mountType}
+                        {wM}m × {hM}m · {screen.mountType}
                       </span>
                     </div>
                     <button
@@ -132,7 +151,8 @@ export default function DesignerPage() {
                       ×
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </aside>
 
@@ -151,7 +171,8 @@ export default function DesignerPage() {
                     screen={selectedScreen}
                     panelTypes={customPanelTypes}
                     onUpdateScreen={updateScreen}
-                    onUpdatePanelTypes={updateCustomPanelTypes}
+                    onSavePanelType={savePanelTypeAndSelect}
+                    onDeletePanelType={deletePanelType}
                   />
                 </>
               ) : (
