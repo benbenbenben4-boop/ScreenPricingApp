@@ -9,7 +9,9 @@ export default function TotalPage({ screens, panelTypes }) {
 
   const totalPanels = screenCalcs.reduce((sum, { calc }) => sum + calc.totalPanels, 0);
   const totalWeight = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWeight, 0);
+  const totalWatts = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWatts, 0);
   const totalAmps = screenCalcs.reduce((sum, { calc }) => sum + calc.totalAmps, 0);
+  const totalPerPhaseAmps = totalAmps / 3;
 
   if (screens.length === 0) {
     return (
@@ -34,11 +36,17 @@ export default function TotalPage({ screens, panelTypes }) {
           <span className="summary-label">Total Weight</span>
           <span className="summary-value">{totalWeight.toFixed(1)} kg</span>
         </div>
-        {totalAmps > 0 && (
-          <div className="summary-item">
-            <span className="summary-label">Total Power</span>
-            <span className="summary-value">{totalAmps.toFixed(1)} A</span>
-          </div>
+        {totalWatts > 0 && (
+          <>
+            <div className="summary-item">
+              <span className="summary-label">Total Power</span>
+              <span className="summary-value">{totalWatts.toFixed(0)} W</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">L1 / L2 / L3</span>
+              <span className="summary-value">{totalPerPhaseAmps.toFixed(1)} A each</span>
+            </div>
+          </>
         )}
       </div>
 
@@ -82,15 +90,27 @@ export default function TotalPage({ screens, panelTypes }) {
                 <span>Total Weight</span>
                 <span>{calc.totalWeight.toFixed(1)} kg</span>
               </div>
-              {calc.totalAmps > 0 && (
+              {calc.totalWatts > 0 && (
                 <>
                   <div className="breakdown-row">
-                    <span>Power (Single Phase)</span>
-                    <span>{calc.singlePhaseAmps.toFixed(1)} A</span>
+                    <span>Total Power</span>
+                    <span>{calc.totalWatts.toFixed(0)} W</span>
                   </div>
                   <div className="breakdown-row">
-                    <span>Power (3-Phase per leg)</span>
-                    <span>{calc.threePhaseAmps.toFixed(1)} A</span>
+                    <span>Single Phase</span>
+                    <span>{calc.totalAmps.toFixed(1)} A</span>
+                  </div>
+                  <div className="breakdown-row">
+                    <span>L1</span>
+                    <span>{calc.perPhaseAmps.toFixed(1)} A</span>
+                  </div>
+                  <div className="breakdown-row">
+                    <span>L2</span>
+                    <span>{calc.perPhaseAmps.toFixed(1)} A</span>
+                  </div>
+                  <div className="breakdown-row">
+                    <span>L3</span>
+                    <span>{calc.perPhaseAmps.toFixed(1)} A</span>
                   </div>
                 </>
               )}

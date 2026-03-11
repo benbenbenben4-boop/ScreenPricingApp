@@ -4,7 +4,7 @@ import './ScreenDefinition.css';
 
 function PanelTypeModal({ existing, onClose, onSave }) {
   const [form, setForm] = useState(
-    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, amperage: 0 }
+    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, watts: 0 }
   );
 
   function handleSubmit(e) {
@@ -47,8 +47,8 @@ function PanelTypeModal({ existing, onClose, onSave }) {
               <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
             </label>
             <label>
-              Amperage per Panel (A)
-              <input type="number" min="0" step="0.1" value={form.amperage} onChange={(e) => setForm({ ...form, amperage: parseFloat(e.target.value) || 0 })} required />
+              Power per Panel (W)
+              <input type="number" min="0" step="1" value={form.watts} onChange={(e) => setForm({ ...form, watts: parseFloat(e.target.value) || 0 })} required />
             </label>
           </div>
           <div className="modal-actions">
@@ -138,23 +138,31 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
   }
 
   function handleMWidth(val) {
-    setMWidth(val);
     if (currentPanel && val) {
-      handleWidthChange(Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.width)));
+      const panels = Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.width));
+      setMWidth(((panels * currentPanel.width) / 1000).toFixed(3).replace(/\.?0+$/, ''));
+      handleWidthChange(panels);
+    } else {
+      setMWidth(val);
     }
   }
 
   function handleMHeight(val) {
-    setMHeight(val);
     if (currentPanel && val) {
-      update('heightPanels', Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.height)));
+      const panels = Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.height));
+      setMHeight(((panels * currentPanel.height) / 1000).toFixed(3).replace(/\.?0+$/, ''));
+      update('heightPanels', panels);
+    } else {
+      setMHeight(val);
     }
   }
 
   const screenWidthM = currentPanel ? ((screen.widthPanels * currentPanel.width) / 1000).toFixed(2) : '—';
   const screenHeightM = currentPanel ? ((screen.heightPanels * currentPanel.height) / 1000).toFixed(2) : '—';
   const totalPanels = screen.widthPanels * screen.heightPanels;
-  const totalAmps = currentPanel ? totalPanels * (currentPanel.amperage || 0) : 0;
+  const totalWatts = currentPanel ? totalPanels * (currentPanel.watts || 0) : 0;
+  const totalAmps = totalWatts / 230;
+  const perPhaseAmps = totalAmps / 3;
 
   // Shared curve section for both Flown and Ground Stacked.
   // footerSizeForBlocks: the footer size if ground stacked, 0 otherwise.
@@ -277,7 +285,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               {!screen.panelTypeId && <option value="" disabled>Select a panel type…</option>}
               {panelTypes.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg · {p.amperage}A
+                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg · {p.watts}W
                 </option>
               ))}
             </select>
@@ -344,12 +352,24 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
           <div className="size-inputs">
             <label>
               Width (m)
-              <input type="number" min="0.1" step="0.1" value={mWidth} onChange={(e) => handleMWidth(e.target.value)} />
+              <input
+                type="number"
+                min={currentPanel ? currentPanel.width / 1000 : 0.1}
+                step={currentPanel ? currentPanel.width / 1000 : 0.1}
+                value={mWidth}
+                onChange={(e) => handleMWidth(e.target.value)}
+              />
             </label>
             <span className="size-separator">×</span>
             <label>
               Height (m)
-              <input type="number" min="0.1" step="0.1" value={mHeight} onChange={(e) => handleMHeight(e.target.value)} />
+              <input
+                type="number"
+                min={currentPanel ? currentPanel.height / 1000 : 0.1}
+                step={currentPanel ? currentPanel.height / 1000 : 0.1}
+                value={mHeight}
+                onChange={(e) => handleMHeight(e.target.value)}
+              />
             </label>
           </div>
         )}
@@ -360,9 +380,10 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
             <> &nbsp;·&nbsp; {(totalPanels * currentPanel.weight).toFixed(1)} kg</>
           )}
         </p>
-        {totalAmps > 0 && (
+        {totalWatts > 0 && (
           <p className="size-display power-display">
-            {totalAmps.toFixed(1)} A single phase &nbsp;·&nbsp; {(totalAmps / 3).toFixed(1)} A per phase (3Ø)
+            {totalWatts.toFixed(0)} W total &nbsp;·&nbsp; {totalAmps.toFixed(1)} A single phase
+            &nbsp;·&nbsp; L1/L2/L3: {perPhaseAmps.toFixed(1)} A each
           </p>
         )}
       </section>
