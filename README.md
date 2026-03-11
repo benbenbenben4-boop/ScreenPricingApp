@@ -21,7 +21,10 @@ npm install
 npm run dev
 ```
 
-Then open your browser to **http://localhost:5173**
+Vite will print two URLs — open either in your browser:
+
+- **http://localhost:5173** — on this machine
+- **http://&lt;your-ip&gt;:5173** — from any device on the same network
 
 The app runs with hot-reload — any changes you make to the code are reflected instantly without restarting.
 
