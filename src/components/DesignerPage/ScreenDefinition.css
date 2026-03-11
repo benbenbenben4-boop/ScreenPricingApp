@@ -106,6 +106,28 @@
   font-size: 0.78rem;
 }
 
+.column-angle-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.angle-item-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.angle-unit-blocks {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.power-display {
+  margin-top: 0.25rem !important;
+  color: var(--accent) !important;
+}
+
 .column-angle-grid input {
   padding: 0.35rem 0.5rem;
   font-size: 0.85rem;

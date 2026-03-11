@@ -9,6 +9,7 @@ export default function TotalPage({ screens, panelTypes }) {
 
   const totalPanels = screenCalcs.reduce((sum, { calc }) => sum + calc.totalPanels, 0);
   const totalWeight = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWeight, 0);
+  const totalAmps = screenCalcs.reduce((sum, { calc }) => sum + calc.totalAmps, 0);
 
   if (screens.length === 0) {
     return (
@@ -33,6 +34,12 @@ export default function TotalPage({ screens, panelTypes }) {
           <span className="summary-label">Total Weight</span>
           <span className="summary-value">{totalWeight.toFixed(1)} kg</span>
         </div>
+        {totalAmps > 0 && (
+          <div className="summary-item">
+            <span className="summary-label">Total Power</span>
+            <span className="summary-value">{totalAmps.toFixed(1)} A</span>
+          </div>
+        )}
       </div>
 
       <div className="screen-breakdown">
@@ -75,6 +82,18 @@ export default function TotalPage({ screens, panelTypes }) {
                 <span>Total Weight</span>
                 <span>{calc.totalWeight.toFixed(1)} kg</span>
               </div>
+              {calc.totalAmps > 0 && (
+                <>
+                  <div className="breakdown-row">
+                    <span>Power (Single Phase)</span>
+                    <span>{calc.singlePhaseAmps.toFixed(1)} A</span>
+                  </div>
+                  <div className="breakdown-row">
+                    <span>Power (3-Phase per leg)</span>
+                    <span>{calc.threePhaseAmps.toFixed(1)} A</span>
+                  </div>
+                </>
+              )}
               <div className="breakdown-row">
                 <span>Mount</span>
                 <span>{screen.mountType}</span>

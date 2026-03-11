@@ -36,7 +36,7 @@ export function cloneProject(project, newName) {
 }
 
 // Panel types are fully user-defined per project (stored in project.customPanelTypes).
-// Panel shape: { id, name, pixelsWide, pixelsTall, width (mm), height (mm), weight (kg) }
+// Panel shape: { id, name, pixelsWide, pixelsTall, width (mm), height (mm), weight (kg), amperage (A) }
 
 export const MOUNT_TYPES = ['Flown', 'Ground Stacked', 'Roof'];
 export const CURVE_TYPES = ['Flat', 'Curved'];
@@ -73,6 +73,9 @@ export function calculateScreen(screen, panelTypes) {
       udl: 0,
       screenWidthMm: 0,
       screenHeightMm: 0,
+      totalAmps: 0,
+      singlePhaseAmps: 0,
+      threePhaseAmps: 0,
     };
   }
 
@@ -104,6 +107,9 @@ export function calculateScreen(screen, panelTypes) {
     ? footerCount * (screen.heightPanels - footerSize) * 2
     : 0;
 
+  // Power calculations
+  const totalAmps = totalPanels * (panelType.amperage || 0);
+
   return {
     panelType,
     totalPanels,
@@ -116,5 +122,8 @@ export function calculateScreen(screen, panelTypes) {
     totalUprights,
     totalGrabs,
     angleBlocks,
+    totalAmps,
+    singlePhaseAmps: totalAmps,
+    threePhaseAmps: totalAmps / 3,
   };
 }

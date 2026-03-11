@@ -4,7 +4,7 @@ import './ScreenDefinition.css';
 
 function PanelTypeModal({ existing, onClose, onSave }) {
   const [form, setForm] = useState(
-    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0 }
+    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, amperage: 0 }
   );
 
   function handleSubmit(e) {
@@ -41,10 +41,16 @@ function PanelTypeModal({ existing, onClose, onSave }) {
               <input type="number" min="1" value={form.height} onChange={(e) => setForm({ ...form, height: parseInt(e.target.value) || 0 })} required />
             </label>
           </div>
-          <label>
-            Weight per Panel (kg)
-            <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
-          </label>
+          <div className="form-row">
+            <label>
+              Weight per Panel (kg)
+              <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
+            </label>
+            <label>
+              Amperage per Panel (A)
+              <input type="number" min="0" step="0.1" value={form.amperage} onChange={(e) => setForm({ ...form, amperage: parseFloat(e.target.value) || 0 })} required />
+            </label>
+          </div>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn-primary">Save</button>
@@ -67,7 +73,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
   const isGroundStacked = screen.mountType === 'Ground Stacked';
   const isCurved = screen.curveType === 'Curved';
   // Continuous = single uniform degree for all columns
-  // Non-Continuous = individual angle per column gap
+  // Non-Continuous = individual angle per footer unit (ground stack) or per column gap (flown)
   const isPerColumn = screen.curveContinuity === 'Non-Continuous';
 
   function update(field, value) {
@@ -84,12 +90,20 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
     setEditingPanel(null);
   }
 
+  // For non-continuous ground stack, angles are per footer unit (footerCount entries).
+  // For flown/no-footer, angles are per panel gap (widthPanels - 1 entries).
+  function getAngleCount(widthPanels, footerSize, mountType) {
+    if (mountType === 'Ground Stacked' && footerSize > 0) {
+      return Math.round(widthPanels / footerSize);
+    }
+    return Math.max(0, widthPanels - 1);
+  }
+
   function handleContinuityChange(val) {
     let angles = screen.columnAngles;
     if (val === 'Non-Continuous') {
-      // Build per-column angle array initialised to the current uniform degree
-      const gaps = Math.max(0, screen.widthPanels - 1);
-      angles = Array.from({ length: gaps }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
+      const size = getAngleCount(screen.widthPanels, screen.footerSize, screen.mountType);
+      angles = Array.from({ length: size }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
     }
     onUpdateScreen({ ...screen, curveContinuity: val, columnAngles: angles });
   }
@@ -102,9 +116,18 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
 
   function handleWidthChange(val) {
     const w = parseInt(val) || 1;
-    const gaps = Math.max(0, w - 1);
-    const angles = Array.from({ length: gaps }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
+    const size = getAngleCount(w, screen.footerSize, screen.mountType);
+    const angles = Array.from({ length: size }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
     onUpdateScreen({ ...screen, widthPanels: w, columnAngles: angles });
+  }
+
+  function handleFooterChange(newFooterSize) {
+    let update = { ...screen, footerSize: newFooterSize };
+    if (screen.curveContinuity === 'Non-Continuous' && screen.curveType === 'Curved') {
+      const size = getAngleCount(screen.widthPanels, newFooterSize, 'Ground Stacked');
+      update.columnAngles = Array.from({ length: size }, (_, i) => screen.columnAngles[i] ?? screen.curveDegree);
+    }
+    onUpdateScreen(update);
   }
 
   function switchToMetres() {
@@ -117,24 +140,30 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
   function handleMWidth(val) {
     setMWidth(val);
     if (currentPanel && val) {
-      const w = Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.width));
-      handleWidthChange(w);
+      handleWidthChange(Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.width)));
     }
   }
 
   function handleMHeight(val) {
     setMHeight(val);
     if (currentPanel && val) {
-      const h = Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.height));
-      update('heightPanels', h);
+      update('heightPanels', Math.max(1, Math.round((parseFloat(val) * 1000) / currentPanel.height)));
     }
   }
 
   const screenWidthM = currentPanel ? ((screen.widthPanels * currentPanel.width) / 1000).toFixed(2) : '—';
   const screenHeightM = currentPanel ? ((screen.heightPanels * currentPanel.height) / 1000).toFixed(2) : '—';
+  const totalPanels = screen.widthPanels * screen.heightPanels;
+  const totalAmps = currentPanel ? totalPanels * (currentPanel.amperage || 0) : 0;
 
-  // Shared curve section rendered in both Flown and Ground Stacked
+  // Shared curve section for both Flown and Ground Stacked.
+  // footerSizeForBlocks: the footer size if ground stacked, 0 otherwise.
   function renderCurveSection(footerSizeForBlocks) {
+    const isGS = isGroundStacked && footerSizeForBlocks > 0;
+    const angleCount = getAngleCount(screen.widthPanels, footerSizeForBlocks, screen.mountType);
+    const blocksPerUnit = isGS ? (screen.heightPanels - footerSizeForBlocks) * 2 : 0;
+    const continuousTotalBlocks = isGS ? angleCount * blocksPerUnit : 0;
+
     return (
       <>
         <h4>Curve</h4>
@@ -155,18 +184,6 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
 
         {isCurved && (
           <div className="sub-section">
-            <label>
-              Curve Degree (° between each column)
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="30"
-                value={screen.curveDegree}
-                onChange={(e) => update('curveDegree', parseFloat(e.target.value) || 0)}
-              />
-            </label>
-
             <h4>Distribution</h4>
             <div className="radio-group">
               {CURVE_CONTINUITY.map((type) => (
@@ -183,35 +200,58 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               ))}
             </div>
 
-            {/* Non-Continuous = per-column individual angles */}
-            {isPerColumn && screen.widthPanels > 1 && (
-              <div className="column-angles">
-                <h4>Column Angles (° per gap)</h4>
-                <div className="column-angle-grid">
-                  {Array.from({ length: screen.widthPanels - 1 }, (_, i) => (
-                    <label key={i}>
-                      Col {i + 1}–{i + 2}
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        max="30"
-                        value={screen.columnAngles[i] ?? screen.curveDegree}
-                        onChange={(e) => handleColumnAngle(i, e.target.value)}
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
+            {/* Continuous: single degree input for all columns */}
+            {!isPerColumn && (
+              <>
+                <label>
+                  Curve Degree (° between each column)
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="30"
+                    value={screen.curveDegree}
+                    onChange={(e) => update('curveDegree', parseFloat(e.target.value) || 0)}
+                  />
+                </label>
+                {continuousTotalBlocks > 0 && (
+                  <div className="angle-blocks-info">
+                    Angle blocks required: <strong>{continuousTotalBlocks}</strong>
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Angle blocks count — only meaningful on ground stack with a footer */}
-            {footerSizeForBlocks > 0 && currentPanel && (() => {
-              const fc = Math.round(screen.widthPanels / footerSizeForBlocks);
-              const ab = fc * (screen.heightPanels - footerSizeForBlocks) * 2;
+            {/* Non-Continuous: per-unit angle inputs with block count per unit */}
+            {isPerColumn && angleCount > 0 && (() => {
+              const totalBlocks = blocksPerUnit * angleCount;
               return (
-                <div className="angle-blocks-info">
-                  Angle blocks required: <strong>{ab}</strong>
+                <div className="column-angles">
+                  <h4>{isGS ? 'Angle per footer unit (°)' : 'Angle per column gap (°)'}</h4>
+                  <div className="column-angle-grid">
+                    {Array.from({ length: angleCount }, (_, i) => {
+                      const angle = screen.columnAngles[i] ?? screen.curveDegree;
+                      return (
+                        <label key={i} className="column-angle-item">
+                          <span className="angle-item-label">{isGS ? `Unit ${i + 1}` : `${i + 1}–${i + 2}`}</span>
+                          <input
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            max="30"
+                            value={angle}
+                            onChange={(e) => handleColumnAngle(i, e.target.value)}
+                          />
+                          {isGS && <span className="angle-unit-blocks">{blocksPerUnit} blk</span>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {isGS && totalBlocks > 0 && (
+                    <div className="angle-blocks-info">
+                      Total angle blocks: <strong>{totalBlocks}</strong>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -237,7 +277,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               {!screen.panelTypeId && <option value="" disabled>Select a panel type…</option>}
               {panelTypes.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg
+                  {p.name} — {p.pixelsWide}×{p.pixelsTall}px · {p.width}×{p.height}mm · {p.weight}kg · {p.amperage}A
                 </option>
               ))}
             </select>
@@ -285,9 +325,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
             <label>
               Width (panels)
               <input
-                type="number"
-                min="1"
-                max="200"
+                type="number" min="1" max="200"
                 value={screen.widthPanels}
                 onChange={(e) => handleWidthChange(e.target.value)}
               />
@@ -296,9 +334,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
             <label>
               Height (panels)
               <input
-                type="number"
-                min="1"
-                max="200"
+                type="number" min="1" max="200"
                 value={screen.heightPanels}
                 onChange={(e) => update('heightPanels', parseInt(e.target.value) || 1)}
               />
@@ -308,35 +344,27 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
           <div className="size-inputs">
             <label>
               Width (m)
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                value={mWidth}
-                onChange={(e) => handleMWidth(e.target.value)}
-              />
+              <input type="number" min="0.1" step="0.1" value={mWidth} onChange={(e) => handleMWidth(e.target.value)} />
             </label>
             <span className="size-separator">×</span>
             <label>
               Height (m)
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                value={mHeight}
-                onChange={(e) => handleMHeight(e.target.value)}
-              />
+              <input type="number" min="0.1" step="0.1" value={mHeight} onChange={(e) => handleMHeight(e.target.value)} />
             </label>
           </div>
         )}
 
         <p className="size-display">
-          {screen.widthPanels * screen.heightPanels} panels &nbsp;·&nbsp;
-          {screenWidthM}m × {screenHeightM}m
+          {totalPanels} panels &nbsp;·&nbsp; {screenWidthM}m × {screenHeightM}m
           {currentPanel && (
-            <> &nbsp;·&nbsp; {(screen.widthPanels * screen.heightPanels * currentPanel.weight).toFixed(1)} kg</>
+            <> &nbsp;·&nbsp; {(totalPanels * currentPanel.weight).toFixed(1)} kg</>
           )}
         </p>
+        {totalAmps > 0 && (
+          <p className="size-display power-display">
+            {totalAmps.toFixed(1)} A single phase &nbsp;·&nbsp; {(totalAmps / 3).toFixed(1)} A per phase (3Ø)
+          </p>
+        )}
       </section>
 
       {/* Mount Type */}
@@ -364,8 +392,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               <label>
                 Rigging Points
                 <input
-                  type="number"
-                  min="0"
+                  type="number" min="0"
                   value={screen.riggingPoints}
                   onChange={(e) => update('riggingPoints', parseInt(e.target.value) || 0)}
                 />
@@ -373,16 +400,14 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               <label>
                 Hoist Capacity (kg each)
                 <input
-                  type="number"
-                  min="0"
-                  step="1"
+                  type="number" min="0" step="1"
                   value={screen.hoistCapacity}
                   onChange={(e) => update('hoistCapacity', parseFloat(e.target.value) || 0)}
                 />
               </label>
             </div>
             {currentPanel && screen.riggingPoints > 0 && (() => {
-              const totalWeight = screen.widthPanels * screen.heightPanels * currentPanel.weight;
+              const totalWeight = totalPanels * currentPanel.weight;
               const udl = totalWeight / screen.riggingPoints;
               const overCapacity = udl > screen.hoistCapacity;
               return (
@@ -426,7 +451,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
               Footer
               <select
                 value={screen.footerSize}
-                onChange={(e) => update('footerSize', parseInt(e.target.value))}
+                onChange={(e) => handleFooterChange(parseInt(e.target.value))}
                 disabled={!currentPanel}
               >
                 <option value={0}>None</option>
