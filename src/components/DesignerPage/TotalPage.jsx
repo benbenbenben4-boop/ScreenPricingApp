@@ -94,16 +94,22 @@ export default function TotalPage({ screens, panelTypes }) {
                       </span>
                     </div>
                   )}
-                </>
-              )}
-              {screen.mountType === 'Ground Stacked' && (
-                <>
                   {screen.headerSize > 0 && (
                     <div className="breakdown-row">
                       <span>Header</span>
                       <span>{screen.headerSize} panel{screen.headerSize > 1 ? 's' : ''} wide</span>
                     </div>
                   )}
+                  {screen.curveType === 'Curved' && (
+                    <div className="breakdown-row">
+                      <span>Curve</span>
+                      <span>{screen.curveContinuity} — {screen.curveDegree}°</span>
+                    </div>
+                  )}
+                </>
+              )}
+              {screen.mountType === 'Ground Stacked' && (
+                <>
                   {screen.footerSize > 0 && (
                     <div className="breakdown-row">
                       <span>Footer</span>
@@ -134,6 +140,12 @@ export default function TotalPage({ screens, panelTypes }) {
                     <div className="breakdown-row">
                       <span>Curve</span>
                       <span>{screen.curveContinuity} — {screen.curveDegree}°</span>
+                    </div>
+                  )}
+                  {calc.angleBlocks > 0 && (
+                    <div className="breakdown-row">
+                      <span>Angle blocks</span>
+                      <span>{calc.angleBlocks}</span>
                     </div>
                   )}
                 </>

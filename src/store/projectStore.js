@@ -99,6 +99,11 @@ export function calculateScreen(screen, panelTypes) {
     totalGrabs = totalUprights;
   }
 
+  // Angle blocks: footerCount × (heightPanels − footerSize) × 2
+  const angleBlocks = (screen.mountType === 'Ground Stacked' && screen.curveType === 'Curved' && footerSize > 0)
+    ? footerCount * (screen.heightPanels - footerSize) * 2
+    : 0;
+
   return {
     panelType,
     totalPanels,
@@ -110,5 +115,6 @@ export function calculateScreen(screen, panelTypes) {
     rearFooterCount,
     totalUprights,
     totalGrabs,
+    angleBlocks,
   };
 }
