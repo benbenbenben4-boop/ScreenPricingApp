@@ -1,16 +1,50 @@
-# React + Vite
+# Screen Pricing App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An LED screen configuration and quoting tool. Build screen layouts, configure panels and rigging, and generate cost breakdowns — all stored locally in your browser.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [Node.js](https://nodejs.org/) v18 or higher
+- npm (comes with Node.js)
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Install dependencies once after cloning:
 
-## Expanding the ESLint configuration
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Starting the app
+
+```bash
+npm run dev
+```
+
+Then open your browser to **http://localhost:5173**
+
+The app runs with hot-reload — any changes you make to the code are reflected instantly without restarting.
+
+## Stopping the app
+
+In the terminal where the app is running, press **Ctrl + C**.
+
+## Building for production
+
+To create an optimised production build:
+
+```bash
+npm run build
+```
+
+Output goes to the `dist/` folder. To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+Then open **http://localhost:4173**
+
+## Data storage
+
+All project data is saved to your browser's **localStorage**. No server or database is required. Data persists between sessions but is tied to the browser — clearing site data will remove all projects.
