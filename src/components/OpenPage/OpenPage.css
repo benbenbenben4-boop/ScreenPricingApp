@@ -1,0 +1,112 @@
+.open-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 0 0 4rem;
+}
+
+.open-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.open-header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.open-actions {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.btn-large {
+  padding: 0.875rem 2.5rem;
+  font-size: 1.05rem;
+}
+
+.projects-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.projects-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 3rem;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border-color 0.15s;
+}
+
+.project-card:hover {
+  border-color: var(--accent);
+}
+
+.project-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.project-quote-id {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.project-company {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.project-date,
+.project-screens {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.project-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
