@@ -41,8 +41,8 @@ export default function TotalPage({ screens, panelTypes }) {
             <div className="breakdown-header">
               <h3>{screen.name}</h3>
               <span className="breakdown-meta">
-                {calc.screenWidthMm > 0
-                  ? `${(calc.screenWidthMm / 1000).toFixed(2)}m × ${(calc.screenHeightMm / 1000).toFixed(2)}m`
+                {calc.screenWidthMm > 0 && calc.panelType
+                  ? `${(calc.screenWidthMm / 1000).toFixed(2)}m × ${(calc.screenHeightMm / 1000).toFixed(2)}m · ${screen.widthPanels * calc.panelType.pixelsWide}×${screen.heightPanels * calc.panelType.pixelsTall}px`
                   : `${screen.widthPanels}×${screen.heightPanels} panels`}
               </span>
             </div>

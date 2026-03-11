@@ -129,7 +129,7 @@ export default function DesignerPage() {
                 {(project.screens || []).map((screen) => {
                   const pt = customPanelTypes.find((p) => p.id === screen.panelTypeId);
                   const sub = pt
-                    ? `${((screen.widthPanels * pt.width) / 1000).toFixed(2)}m × ${((screen.heightPanels * pt.height) / 1000).toFixed(2)}m · ${screen.mountType}`
+                    ? `${((screen.widthPanels * pt.width) / 1000).toFixed(2)}m × ${((screen.heightPanels * pt.height) / 1000).toFixed(2)}m · ${screen.widthPanels * pt.pixelsWide}×${screen.heightPanels * pt.pixelsTall}px`
                     : `${screen.widthPanels}×${screen.heightPanels} · ${screen.mountType}`;
                   return (
                   <div
