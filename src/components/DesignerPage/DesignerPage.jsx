@@ -176,6 +176,7 @@ export default function DesignerPage() {
             panelTypes={panelTypes}
             wiring={wiring}
             onUpdateWiring={(newWiring) => updateProject({ ...project, wiring: newWiring })}
+            onUpdateScreen={updateScreen}
           />
         ) : (
           <div className="screens-layout">

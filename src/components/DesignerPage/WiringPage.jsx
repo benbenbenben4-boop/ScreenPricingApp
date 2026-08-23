@@ -3,7 +3,7 @@ import WiringDataPage from './WiringDataPage';
 import WiringPowerPage from './WiringPowerPage';
 import './WiringPage.css';
 
-export default function WiringPage({ screens, panelTypes, wiring, onUpdateWiring }) {
+export default function WiringPage({ screens, panelTypes, wiring, onUpdateWiring, onUpdateScreen }) {
   const [subTab, setSubTab] = useState('data');
 
   return (
@@ -29,6 +29,7 @@ export default function WiringPage({ screens, panelTypes, wiring, onUpdateWiring
           panelTypes={panelTypes}
           settings={wiring.data}
           onUpdateSettings={(data) => onUpdateWiring({ ...wiring, data })}
+          onUpdateScreen={onUpdateScreen}
         />
       ) : (
         <WiringPowerPage

@@ -39,6 +39,11 @@
   margin-top: 1.75rem;
 }
 
+.cabling-screen-picker {
+  max-width: 280px;
+  margin-bottom: 1rem;
+}
+
 .wiring-results-table {
   width: 100%;
   border-collapse: collapse;

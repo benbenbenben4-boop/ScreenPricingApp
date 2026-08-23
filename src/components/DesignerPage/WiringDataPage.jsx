@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { PROCESSORS, PROCESSOR_MODELS, BIT_DEPTHS, FRAME_RATES } from '../../data/bromptonProcessors';
-import { calculateScreenWiring } from '../../lib/bromptonCapacity';
+import { calculateScreenWiring, calculateFixtureCapacities } from '../../lib/bromptonCapacity';
+import WiringCablingDiagram from './WiringCablingDiagram';
 import './ScreenDefinition.css'; // reuses .def-section / .form-row / .no-panels-msg
 import './WiringPage.css';
 
-export default function WiringDataPage({ screens, panelTypes, settings, onUpdateSettings }) {
+export default function WiringDataPage({ screens, panelTypes, settings, onUpdateSettings, onUpdateScreen }) {
+  const [selectedScreenId, setSelectedScreenId] = useState(null);
   const processor = settings.processorModel ? PROCESSORS[settings.processorModel] : null;
+  const selectedScreen = screens.find((s) => s.id === selectedScreenId) || screens[0] || null;
+  const selectedPanelType = selectedScreen ? panelTypes.find((p) => p.id === selectedScreen.panelTypeId) : null;
 
   function update(field, value) {
     onUpdateSettings({ ...settings, [field]: value });
@@ -145,6 +150,35 @@ export default function WiringDataPage({ screens, panelTypes, settings, onUpdate
             </tr>
           </tfoot>
         </table>
+      )}
+
+      {processor && screens.length > 0 && (
+        <>
+          <h3 className="wiring-section-heading">Cable Layout</h3>
+          <label className="cabling-screen-picker">
+            Screen
+            <select
+              value={selectedScreen?.id || ''}
+              onChange={(e) => setSelectedScreenId(e.target.value)}
+            >
+              {screens.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+
+          {!selectedPanelType ? (
+            <p className="no-panels-msg">Select a panel type for this screen (in the Screens tab) to lay out cabling.</p>
+          ) : (
+            <WiringCablingDiagram
+              key={selectedScreen.id}
+              screen={selectedScreen}
+              panelType={selectedPanelType}
+              fixturesPerPort={calculateFixtureCapacities(selectedPanelType, processor, settings).fixturesPerPort}
+              onUpdateScreen={onUpdateScreen}
+            />
+          )}
+        </>
       )}
     </div>
   );
