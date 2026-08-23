@@ -51,3 +51,24 @@ Then open **http://localhost:4173**
 ## Data storage
 
 All project data is saved to your browser's **localStorage**. No server or database is required. Data persists between sessions but is tied to the browser — clearing site data will remove all projects.
+
+## Running with Docker
+
+The app is a static site (no backend), so the Docker image builds it with Vite and serves the output with nginx.
+
+Build and run directly:
+
+```bash
+docker build -t screen-pricing-app .
+docker run -p 8080:80 screen-pricing-app
+```
+
+Or with Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+Then open **http://localhost:8080**.
+
+To host it online, deploy the image to any container host (Fly.io, Render, a VPS, ECS, Cloud Run, etc.) and point it at port `80` inside the container.
