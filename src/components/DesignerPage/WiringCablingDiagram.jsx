@@ -1,7 +1,70 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { CABLE_PATTERNS, generateCabling, isStringOverCapacity, isStringOutOfBounds } from '../../lib/cabling';
+import { CABLE_PRESETS, generateCabling, isStringOverCapacity, isStringOutOfBounds } from '../../lib/cabling';
 import './WiringCablingDiagram.css';
+
+// Small preview grid + capacity for the preset icons: comb types get one string per
+// row/column (capacity = the other axis, so nothing splits); serpentine types get one
+// continuous string across the whole preview grid.
+const ICON_COLS = 4;
+const ICON_ROWS = 4;
+const ICON_CELL = 20;
+
+function iconCapacity(patternType) {
+  if (patternType === 'columnComb') return ICON_ROWS;
+  if (patternType === 'rowComb') return ICON_COLS;
+  return ICON_COLS * ICON_ROWS;
+}
+
+function PatternPresetIcon({ preset, selected, onClick }) {
+  const { strings } = generateCabling(ICON_COLS, ICON_ROWS, iconCapacity(preset.patternType), preset.patternType, preset.corner);
+  const w = ICON_COLS * ICON_CELL;
+  const h = ICON_ROWS * ICON_CELL;
+
+  return (
+    <button
+      type="button"
+      className={`pattern-icon-btn ${selected ? 'selected' : ''}`}
+      onClick={onClick}
+      title={preset.label}
+    >
+      <svg viewBox={`0 0 ${w} ${h}`} className="pattern-icon-svg">
+        <defs>
+          <marker
+            id={`picon-arrow-${preset.id}`}
+            viewBox="0 0 10 10" refX="5" refY="5"
+            markerWidth="4" markerHeight="4"
+            orient="auto-start-reverse"
+          >
+            <path d="M0,0 L10,5 L0,10 z" className="pattern-icon-arrowhead" />
+          </marker>
+        </defs>
+        {Array.from({ length: ICON_ROWS }, (_, r) =>
+          Array.from({ length: ICON_COLS }, (_, c) => (
+            <rect key={`${c}-${r}`} x={c * ICON_CELL} y={r * ICON_CELL} width={ICON_CELL} height={ICON_CELL} className="pattern-icon-cell" />
+          ))
+        )}
+        {strings.map((s, si) =>
+          s.path.slice(1).map((p, idx) => {
+            const from = s.path[idx];
+            const x1 = from.col * ICON_CELL + ICON_CELL / 2;
+            const y1 = from.row * ICON_CELL + ICON_CELL / 2;
+            const x2 = p.col * ICON_CELL + ICON_CELL / 2;
+            const y2 = p.row * ICON_CELL + ICON_CELL / 2;
+            return (
+              <line
+                key={`${si}-${idx}`}
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                className="pattern-icon-line"
+                markerEnd={`url(#picon-arrow-${preset.id})`}
+              />
+            );
+          })
+        )}
+      </svg>
+    </button>
+  );
+}
 
 // Validated 8-hue categorical palette (dataviz skill, references/palette.md — light mode).
 // Identity here is carried primarily by grid position, the order-index badge, and the
@@ -21,7 +84,7 @@ function stringColor(index) {
 
 export default function WiringCablingDiagram({ screen, panelType, fixturesPerPort, onUpdateScreen }) {
   const [activeStringId, setActiveStringId] = useState(null);
-  const [pattern, setPattern] = useState('columnComb');
+  const [pattern, setPattern] = useState({ patternType: 'columnComb', corner: 'top-left' });
 
   const cols = screen.widthPanels;
   const rows = screen.heightPanels;
@@ -38,19 +101,19 @@ export default function WiringCablingDiagram({ screen, panelType, fixturesPerPor
   }
 
   function handleAutoSuggest() {
-    updateCabling(generateCabling(cols, rows, fixturesPerPort, pattern));
+    updateCabling(generateCabling(cols, rows, fixturesPerPort, pattern.patternType, pattern.corner));
     setActiveStringId(null);
   }
 
   function handleAddString() {
     const newString = { id: uuidv4(), path: [] };
-    const current = cabling || { pattern: 'custom', strings: [] };
-    updateCabling({ ...current, pattern: 'custom', strings: [...current.strings, newString] });
+    const current = cabling || { strings: [] };
+    updateCabling({ ...current, patternType: 'custom', strings: [...current.strings, newString] });
     setActiveStringId(newString.id);
   }
 
   function handleDeleteString(id) {
-    updateCabling({ ...cabling, pattern: 'custom', strings: strings.filter((s) => s.id !== id) });
+    updateCabling({ ...cabling, patternType: 'custom', strings: strings.filter((s) => s.id !== id) });
     if (activeStringId === id) setActiveStringId(null);
   }
 
@@ -67,7 +130,7 @@ export default function WiringCablingDiagram({ screen, panelType, fixturesPerPor
       }
       return { ...s, path: filteredPath };
     });
-    updateCabling({ ...cabling, pattern: 'custom', strings: newStrings });
+    updateCabling({ ...cabling, patternType: 'custom', strings: newStrings });
   }
 
   const gridPxW = cols * panelType.pixelsWide;
@@ -78,16 +141,23 @@ export default function WiringCablingDiagram({ screen, panelType, fixturesPerPor
   return (
     <div className="cabling-diagram">
       <div className="cabling-controls">
-        <label>
-          Auto-suggest pattern
-          <select value={pattern} onChange={(e) => setPattern(e.target.value)}>
-            {CABLE_PATTERNS.map((p) => (
-              <option key={p.id} value={p.id}>{p.label}</option>
+        <div className="pattern-picker">
+          <span className="pattern-picker-label">Cable direction preset</span>
+          <div className="pattern-icon-grid">
+            {CABLE_PRESETS.map((preset) => (
+              <PatternPresetIcon
+                key={preset.id}
+                preset={preset}
+                selected={pattern.patternType === preset.patternType && pattern.corner === preset.corner}
+                onClick={() => setPattern({ patternType: preset.patternType, corner: preset.corner })}
+              />
             ))}
-          </select>
-        </label>
-        <button className="btn-primary btn-sm" onClick={handleAutoSuggest}>Auto-suggest</button>
-        <button className="btn-secondary btn-sm" onClick={handleAddString}>+ Add String</button>
+          </div>
+        </div>
+        <div className="cabling-action-btns">
+          <button className="btn-primary btn-sm" onClick={handleAutoSuggest}>Auto-suggest</button>
+          <button className="btn-secondary btn-sm" onClick={handleAddString}>+ Add String</button>
+        </div>
       </div>
 
       <div className="cabling-body">
