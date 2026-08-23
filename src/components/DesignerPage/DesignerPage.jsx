@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loadProjects, saveProjects, createScreen, clearPanelTypeReferences } from '../../store/projectStore';
+import { loadProjects, saveProjects, createScreen, clearPanelTypeReferences, DEFAULT_WIRING } from '../../store/projectStore';
 import { loadPanelTypes, savePanelTypes } from '../../store/panelTypeStore';
 import ScreenDefinition from './ScreenDefinition';
 import TotalPage from './TotalPage';
+import WiringPage from './WiringPage';
 import './DesignerPage.css';
 
 function ScreenListItem({ screen, selected, sub, onSelect, onDelete, onRename }) {
@@ -131,6 +132,7 @@ export default function DesignerPage() {
   }
 
   const selectedScreen = project.screens?.find((s) => s.id === selectedScreenId);
+  const wiring = project.wiring || DEFAULT_WIRING;
 
   return (
     <div className="designer-page">
@@ -149,6 +151,12 @@ export default function DesignerPage() {
             Screens
           </button>
           <button
+            className={`tab-btn ${activeTab === 'wiring' ? 'active' : ''}`}
+            onClick={() => setActiveTab('wiring')}
+          >
+            Wiring
+          </button>
+          <button
             className={`tab-btn ${activeTab === 'total' ? 'active' : ''}`}
             onClick={() => setActiveTab('total')}
           >
@@ -160,8 +168,15 @@ export default function DesignerPage() {
       <div className="designer-body">
         {activeTab === 'total' ? (
           <div className="total-wrapper">
-            <TotalPage screens={project.screens || []} panelTypes={panelTypes} />
+            <TotalPage screens={project.screens || []} panelTypes={panelTypes} wiring={wiring} />
           </div>
+        ) : activeTab === 'wiring' ? (
+          <WiringPage
+            screens={project.screens || []}
+            panelTypes={panelTypes}
+            wiring={wiring}
+            onUpdateWiring={(newWiring) => updateProject({ ...project, wiring: newWiring })}
+          />
         ) : (
           <div className="screens-layout">
             {/* Screen list sidebar */}

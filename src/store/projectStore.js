@@ -15,6 +15,25 @@ export function saveProjects(projects) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
+// Wiring settings default to one processor config applied to every screen in
+// the project (Data), and a list of power circuits screens can be assigned
+// to (Power). Older projects loaded without a `wiring` field fall back to
+// this via `project.wiring || DEFAULT_WIRING`, same pattern as `screens || []`.
+export const DEFAULT_WIRING = {
+  data: {
+    processorModel: null,
+    bitDepth: 10,
+    frameRate: 60,
+    usingRedundancy: false,
+    usingUll: false,
+    usingSwitches: false,
+    usingFailover: false,
+  },
+  power: {
+    circuits: [],
+  },
+};
+
 export function createProject({ quoteId, company, date }) {
   return {
     id: uuidv4(),
@@ -23,6 +42,7 @@ export function createProject({ quoteId, company, date }) {
     date,
     createdAt: new Date().toISOString(),
     screens: [],
+    wiring: DEFAULT_WIRING,
   };
 }
 

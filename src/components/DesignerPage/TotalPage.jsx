@@ -1,7 +1,9 @@
-import { calculateScreen } from '../../store/projectStore';
+import { calculateScreen, DEFAULT_WIRING } from '../../store/projectStore';
+import { PROCESSORS } from '../../data/bromptonProcessors';
+import { calculateScreenWiring } from '../../lib/bromptonCapacity';
 import './TotalPage.css';
 
-export default function TotalPage({ screens, panelTypes }) {
+export default function TotalPage({ screens, panelTypes, wiring }) {
   const screenCalcs = screens.map((screen) => ({
     screen,
     calc: calculateScreen(screen, panelTypes),
@@ -12,6 +14,20 @@ export default function TotalPage({ screens, panelTypes }) {
   const totalWatts = screenCalcs.reduce((sum, { calc }) => sum + calc.totalWatts, 0);
   const totalAmps = screenCalcs.reduce((sum, { calc }) => sum + calc.totalAmps, 0);
   const totalPerPhaseAmps = totalAmps / 3;
+
+  const { data: dataSettings, power } = wiring || DEFAULT_WIRING;
+  const processor = dataSettings?.processorModel ? PROCESSORS[dataSettings.processorModel] : null;
+  const totalProcessors = processor
+    ? screens.reduce((sum, screen) => {
+        const panelType = panelTypes.find((p) => p.id === screen.panelTypeId);
+        if (!panelType) return sum;
+        return sum + calculateScreenWiring(screen, panelType, processor, dataSettings).processorsNeeded;
+      }, 0)
+    : 0;
+
+  const circuits = power?.circuits || [];
+  const assignedScreenIds = new Set(circuits.flatMap((c) => c.screenIds));
+  const unassignedCount = screens.filter((s) => !assignedScreenIds.has(s.id)).length;
 
   if (screens.length === 0) {
     return (
@@ -47,6 +63,20 @@ export default function TotalPage({ screens, panelTypes }) {
               <span className="summary-value">{totalPerPhaseAmps.toFixed(1)} A each</span>
             </div>
           </>
+        )}
+        {processor && (
+          <div className="summary-item">
+            <span className="summary-label">Processors</span>
+            <span className="summary-value">{totalProcessors} × {processor.name}</span>
+          </div>
+        )}
+        {circuits.length > 0 && (
+          <div className="summary-item">
+            <span className="summary-label">Circuits</span>
+            <span className="summary-value">
+              {circuits.length}{unassignedCount > 0 ? ` · ${unassignedCount} unassigned` : ''}
+            </span>
+          </div>
         )}
       </div>
 

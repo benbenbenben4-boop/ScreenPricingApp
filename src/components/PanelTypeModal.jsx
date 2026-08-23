@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { createPanelType } from '../store/panelTypeStore';
 
-export default function PanelTypeModal({ existing, onClose, onSave }) {
+// `existing` edits a saved panel type in place (keeps its id).
+// `initial` pre-fills a new panel type (e.g. from the library picker) without an id yet.
+export default function PanelTypeModal({ existing, initial, onClose, onSave }) {
   const [form, setForm] = useState(
-    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, watts: 0 }
+    existing || initial || { name: '', manufacturer: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, watts: 0 }
   );
 
   function handleSubmit(e) {
@@ -19,6 +21,10 @@ export default function PanelTypeModal({ existing, onClose, onSave }) {
           <label>
             Name
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          </label>
+          <label>
+            Manufacturer
+            <input value={form.manufacturer || ''} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} placeholder="Optional" />
           </label>
           <div className="form-row">
             <label>

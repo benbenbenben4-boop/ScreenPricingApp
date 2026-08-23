@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadPanelTypes, savePanelTypes } from '../../store/panelTypeStore';
 import { clearPanelTypeReferences } from '../../store/projectStore';
 import PanelTypeModal from '../PanelTypeModal';
+import PanelLibraryModal from '../PanelLibraryModal';
 import './SettingsPage.css';
 
 function DeletePanelTypeModal({ panelType, onClose, onConfirm }) {
@@ -28,8 +29,19 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [panelTypes, setPanelTypes] = useState(() => loadPanelTypes());
   const [showAdd, setShowAdd] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryDraft, setLibraryDraft] = useState(null);
   const [editingPanel, setEditingPanel] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [query, setQuery] = useState('');
+
+  const filteredPanelTypes = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return panelTypes;
+    return panelTypes.filter(
+      (p) => p.name.toLowerCase().includes(q) || (p.manufacturer || '').toLowerCase().includes(q)
+    );
+  }, [panelTypes, query]);
 
   function handleSave(panelType) {
     const exists = panelTypes.find((p) => p.id === panelType.id);
@@ -40,6 +52,7 @@ export default function SettingsPage() {
     setPanelTypes(updated);
     setShowAdd(false);
     setEditingPanel(null);
+    setLibraryDraft(null);
   }
 
   function handleDelete() {
@@ -48,6 +61,11 @@ export default function SettingsPage() {
     setPanelTypes(updated);
     clearPanelTypeReferences(deleteTarget.id);
     setDeleteTarget(null);
+  }
+
+  function handleLibrarySelect(draft) {
+    setShowLibrary(false);
+    setLibraryDraft(draft);
   }
 
   return (
@@ -66,19 +84,39 @@ export default function SettingsPage() {
                 Define the LED panel types available when building screens. These are shared across all projects.
               </p>
             </div>
-            <button className="btn-primary btn-sm" onClick={() => setShowAdd(true)}>
-              + Add Panel Type
-            </button>
+            <div className="settings-section-actions">
+              <button className="btn-secondary btn-sm" onClick={() => setShowLibrary(true)}>
+                Browse Library
+              </button>
+              <button className="btn-primary btn-sm" onClick={() => setShowAdd(true)}>
+                + Add Panel Type
+              </button>
+            </div>
           </div>
 
+          {panelTypes.length > 0 && (
+            <input
+              className="panel-type-search"
+              type="text"
+              placeholder="Search by name or manufacturer…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          )}
+
           {panelTypes.length === 0 ? (
-            <p className="empty-state">No panel types yet. Add your first one above.</p>
+            <p className="empty-state">No panel types yet. Add one, or browse the library above.</p>
+          ) : filteredPanelTypes.length === 0 ? (
+            <p className="empty-state">No panel types match "{query}".</p>
           ) : (
             <div className="panel-type-list">
-              {panelTypes.map((p) => (
+              {filteredPanelTypes.map((p) => (
                 <div key={p.id} className="panel-type-card">
                   <div className="panel-type-info">
-                    <span className="panel-type-name">{p.name}</span>
+                    <span className="panel-type-name">
+                      {p.name}
+                      {p.manufacturer && <span className="panel-type-manu"> — {p.manufacturer}</span>}
+                    </span>
                     <span className="panel-type-spec">
                       {p.pixelsWide}×{p.pixelsTall}px &nbsp;·&nbsp; {p.width}×{p.height}mm &nbsp;·&nbsp; {p.weight}kg &nbsp;·&nbsp; {p.watts}W
                     </span>
@@ -94,10 +132,14 @@ export default function SettingsPage() {
         </section>
       </div>
 
-      {(showAdd || editingPanel) && (
+      {showLibrary && (
+        <PanelLibraryModal onClose={() => setShowLibrary(false)} onSelect={handleLibrarySelect} />
+      )}
+      {(showAdd || editingPanel || libraryDraft) && (
         <PanelTypeModal
           existing={editingPanel}
-          onClose={() => { setShowAdd(false); setEditingPanel(null); }}
+          initial={libraryDraft}
+          onClose={() => { setShowAdd(false); setEditingPanel(null); setLibraryDraft(null); }}
           onSave={handleSave}
         />
       )}

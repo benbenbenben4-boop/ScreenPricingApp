@@ -58,6 +58,21 @@
   max-width: 480px;
 }
 
+.settings-section-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.panel-type-search {
+  margin-bottom: 1rem;
+}
+
+.panel-type-manu {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .panel-type-list {
   display: flex;
   flex-direction: column;

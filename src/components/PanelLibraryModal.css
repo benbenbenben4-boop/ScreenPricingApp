@@ -1,0 +1,67 @@
+.panel-library-modal {
+  max-width: 560px;
+  max-height: 80vh;
+}
+
+.library-search {
+  padding: 0.6rem 0.85rem;
+}
+
+.library-status {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.library-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow-y: auto;
+  max-height: 340px;
+  padding-right: 0.25rem;
+}
+
+.library-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.library-row:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.library-row-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.library-row-manu {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.library-row-spec {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.library-empty {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1.5rem;
+}
