@@ -191,6 +191,13 @@
   color: var(--text-muted);
 }
 
+.screen-item-rename-input {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.1rem 0.35rem;
+  width: 100%;
+}
+
 .btn-icon {
   padding: 0.1rem 0.4rem;
   font-size: 1rem;

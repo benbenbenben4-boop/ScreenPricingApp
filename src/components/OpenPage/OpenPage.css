@@ -5,10 +5,17 @@
 }
 
 .open-header {
+  position: relative;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 2.5rem 2rem;
   text-align: center;
+}
+
+.btn-settings {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
 }
 
 .open-header h1 {

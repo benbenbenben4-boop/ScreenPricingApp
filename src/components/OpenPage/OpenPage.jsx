@@ -145,6 +145,9 @@ export default function OpenPage() {
   return (
     <div className="open-page">
       <header className="open-header">
+        <button className="btn-secondary btn-settings" onClick={() => navigate('/settings')}>
+          ⚙ Settings
+        </button>
         <h1>Screen Pricing <span className="version-badge">{VERSION}</span></h1>
         <p className="subtitle">LED Screen Configuration &amp; Quoting Tool</p>
       </header>

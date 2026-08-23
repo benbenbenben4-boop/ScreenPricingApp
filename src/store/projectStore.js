@@ -26,6 +26,20 @@ export function createProject({ quoteId, company, date }) {
   };
 }
 
+// Clears panelTypeId across every project's screens that reference the given
+// panel type — used when a panel type is deleted from the shared library.
+export function clearPanelTypeReferences(panelTypeId) {
+  const projects = loadProjects();
+  const updated = projects.map((project) => {
+    if (!(project.screens || []).some((s) => s.panelTypeId === panelTypeId)) return project;
+    const screens = project.screens.map((s) =>
+      s.panelTypeId === panelTypeId ? { ...s, panelTypeId: null } : s
+    );
+    return { ...project, screens };
+  });
+  saveProjects(updated);
+}
+
 export function cloneProject(project, newName) {
   return {
     ...JSON.parse(JSON.stringify(project)),

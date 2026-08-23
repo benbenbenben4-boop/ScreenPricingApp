@@ -1,67 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MOUNT_TYPES, CURVE_TYPES, CURVE_CONTINUITY } from '../../store/projectStore';
+import PanelTypeModal from '../PanelTypeModal';
 import './ScreenDefinition.css';
 
-function PanelTypeModal({ existing, onClose, onSave }) {
-  const [form, setForm] = useState(
-    existing || { name: '', pixelsWide: 0, pixelsTall: 0, width: 500, height: 500, weight: 0, watts: 0 }
-  );
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    onSave({ ...form, id: existing?.id || `custom-${Date.now()}` });
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{existing ? 'Edit Panel Type' : 'Add Panel Type'}</h2>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Name
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          </label>
-          <div className="form-row">
-            <label>
-              Pixels Wide
-              <input type="number" min="1" value={form.pixelsWide} onChange={(e) => setForm({ ...form, pixelsWide: parseInt(e.target.value) || 0 })} required />
-            </label>
-            <label>
-              Pixels Tall
-              <input type="number" min="1" value={form.pixelsTall} onChange={(e) => setForm({ ...form, pixelsTall: parseInt(e.target.value) || 0 })} required />
-            </label>
-          </div>
-          <div className="form-row">
-            <label>
-              Module Width (mm)
-              <input type="number" min="1" value={form.width} onChange={(e) => setForm({ ...form, width: parseInt(e.target.value) || 0 })} required />
-            </label>
-            <label>
-              Module Height (mm)
-              <input type="number" min="1" value={form.height} onChange={(e) => setForm({ ...form, height: parseInt(e.target.value) || 0 })} required />
-            </label>
-          </div>
-          <div className="form-row">
-            <label>
-              Weight per Panel (kg)
-              <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} required />
-            </label>
-            <label>
-              Power per Panel (W)
-              <input type="number" min="0" step="1" value={form.watts} onChange={(e) => setForm({ ...form, watts: parseFloat(e.target.value) || 0 })} required />
-            </label>
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary">Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, onSavePanelType, onDeletePanelType }) {
+  const navigate = useNavigate();
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [editingPanel, setEditingPanel] = useState(null);
   const [sizeMode, setSizeMode] = useState('panels');
@@ -276,7 +220,7 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
         <h3>Panel Type</h3>
         <div className="panel-selector">
           {panelTypes.length === 0 ? (
-            <p className="no-panels-msg">No panel types defined yet — add one below.</p>
+            <p className="no-panels-msg">No panel types defined yet — add one below, or in Settings.</p>
           ) : (
             <select
               value={screen.panelTypeId || ''}
@@ -304,6 +248,9 @@ export default function ScreenDefinition({ screen, panelTypes, onUpdateScreen, o
                 </button>
               </>
             )}
+            <button className="btn-secondary btn-sm" onClick={() => navigate('/settings')}>
+              Manage Panel Types
+            </button>
           </div>
         </div>
       </section>

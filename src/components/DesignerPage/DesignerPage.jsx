@@ -1,9 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { loadProjects, saveProjects, createScreen } from '../../store/projectStore';
+import { loadProjects, saveProjects, createScreen, clearPanelTypeReferences } from '../../store/projectStore';
+import { loadPanelTypes, savePanelTypes } from '../../store/panelTypeStore';
 import ScreenDefinition from './ScreenDefinition';
 import TotalPage from './TotalPage';
 import './DesignerPage.css';
+
+function ScreenListItem({ screen, selected, sub, onSelect, onDelete, onRename }) {
+  const [value, setValue] = useState(null); // non-null while editing
+
+  function startEditing() {
+    setValue(screen.name);
+  }
+
+  function commit() {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== screen.name) onRename(trimmed);
+    setValue(null);
+  }
+
+  return (
+    <div className={`screen-item ${selected ? 'selected' : ''}`} onClick={onSelect}>
+      <div className="screen-item-info">
+        {value !== null ? (
+          <input
+            className="screen-item-rename-input"
+            value={value}
+            autoFocus
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              if (e.key === 'Escape') setValue(null);
+            }}
+          />
+        ) : (
+          <span
+            className="screen-item-name"
+            onDoubleClick={(e) => { e.stopPropagation(); startEditing(); }}
+            title="Double-click to rename"
+          >
+            {screen.name}
+          </span>
+        )}
+        <span className="screen-item-sub">{sub}</span>
+      </div>
+      <button className="btn-danger btn-icon" title="Delete screen" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+        ×
+      </button>
+    </div>
+  );
+}
 
 export default function DesignerPage() {
   const { projectId } = useParams();
@@ -13,8 +61,8 @@ export default function DesignerPage() {
 
   const [activeTab, setActiveTab] = useState('screens');
   const [selectedScreenId, setSelectedScreenId] = useState(null);
-  // Custom panel types stored per project (in project.customPanelTypes)
-  const customPanelTypes = project?.customPanelTypes || [];
+  // Panel types are a shared library across all projects (Settings page).
+  const [panelTypes, setPanelTypes] = useState(() => loadPanelTypes());
 
   useEffect(() => {
     if (project?.screens?.length > 0 && !selectedScreenId) {
@@ -59,22 +107,22 @@ export default function DesignerPage() {
     updateProject({ ...project, screens });
   }
 
-  // Save a panel type (add or edit) and atomically select it on the current screen.
-  // Combines both updates in one updateProject call to avoid stale closure overwrites.
+  // Save a panel type (add or edit) to the shared library and select it on the current screen.
   function savePanelTypeAndSelect(newTypes, panelTypeId) {
+    savePanelTypes(newTypes);
+    setPanelTypes(newTypes);
     const screens = project.screens.map((s) =>
       s.id === selectedScreenId ? { ...s, panelTypeId } : s
     );
-    updateProject({ ...project, customPanelTypes: newTypes, screens });
+    updateProject({ ...project, screens });
   }
 
   function deletePanelType(panelTypeId) {
-    const newTypes = (project.customPanelTypes || []).filter((p) => p.id !== panelTypeId);
-    const fallbackId = newTypes[0]?.id || null;
-    const screens = project.screens.map((s) =>
-      s.panelTypeId === panelTypeId ? { ...s, panelTypeId: fallbackId } : s
-    );
-    updateProject({ ...project, customPanelTypes: newTypes, screens });
+    const newTypes = panelTypes.filter((p) => p.id !== panelTypeId);
+    savePanelTypes(newTypes);
+    setPanelTypes(newTypes);
+    clearPanelTypeReferences(panelTypeId);
+    setProjects(loadProjects());
   }
 
   function renameScreen(screenId, name) {
@@ -112,7 +160,7 @@ export default function DesignerPage() {
       <div className="designer-body">
         {activeTab === 'total' ? (
           <div className="total-wrapper">
-            <TotalPage screens={project.screens || []} panelTypes={customPanelTypes} />
+            <TotalPage screens={project.screens || []} panelTypes={panelTypes} />
           </div>
         ) : (
           <div className="screens-layout">
@@ -127,28 +175,20 @@ export default function DesignerPage() {
                   <p className="sidebar-empty">No screens yet.</p>
                 )}
                 {(project.screens || []).map((screen) => {
-                  const pt = customPanelTypes.find((p) => p.id === screen.panelTypeId);
+                  const pt = panelTypes.find((p) => p.id === screen.panelTypeId);
                   const sub = pt
                     ? `${((screen.widthPanels * pt.width) / 1000).toFixed(2)}m × ${((screen.heightPanels * pt.height) / 1000).toFixed(2)}m · ${screen.widthPanels * pt.pixelsWide}×${screen.heightPanels * pt.pixelsTall}px`
                     : `${screen.widthPanels}×${screen.heightPanels} · ${screen.mountType}`;
                   return (
-                  <div
-                    key={screen.id}
-                    className={`screen-item ${selectedScreenId === screen.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedScreenId(screen.id)}
-                  >
-                    <div className="screen-item-info">
-                      <span className="screen-item-name">{screen.name}</span>
-                      <span className="screen-item-sub">{sub}</span>
-                    </div>
-                    <button
-                      className="btn-danger btn-icon"
-                      title="Delete screen"
-                      onClick={(e) => { e.stopPropagation(); deleteScreen(screen.id); }}
-                    >
-                      ×
-                    </button>
-                  </div>
+                    <ScreenListItem
+                      key={screen.id}
+                      screen={screen}
+                      selected={selectedScreenId === screen.id}
+                      sub={sub}
+                      onSelect={() => setSelectedScreenId(screen.id)}
+                      onDelete={() => deleteScreen(screen.id)}
+                      onRename={(name) => renameScreen(screen.id, name)}
+                    />
                   );
                 })}
               </div>
@@ -167,7 +207,7 @@ export default function DesignerPage() {
                   </div>
                   <ScreenDefinition
                     screen={selectedScreen}
-                    panelTypes={customPanelTypes}
+                    panelTypes={panelTypes}
                     onUpdateScreen={updateScreen}
                     onSavePanelType={savePanelTypeAndSelect}
                     onDeletePanelType={deletePanelType}
